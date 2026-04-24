@@ -8,8 +8,8 @@ from multiprocessing import Pool, TimeoutError
 from julia_curve import c_from_group
 
 # Update according to your group size and number (see TUWEL)
-GROUP_SIZE   = None
-GROUP_NUMBER = None
+GROUP_SIZE   = 3
+GROUP_NUMBER = 17
 
 # do not modify BENCHMARK_C
 BENCHMARK_C = complex(-0.2, -0.65)
@@ -38,11 +38,65 @@ def compute_julia_set_sequential(xmin, xmax, ymin, ymax, im_width, im_height, c)
 
     return julia
 
-def compute_julia_in_parallel(size, xmin, xmax, ymin, ymax, patch, nprocs, c):
+
+def compute_patch(task):
+    x_start, y_start, patch, size, xmin, xmax, ymin, ymax, c = task
+
+    zabs_max = 10
+    nit_max = 300
+
+    xwidth = xmax - xmin
+    yheight = ymax - ymin
+
+    # Handle edge patches that may be smaller than patch x patch
+    patch_width = min(patch, size - x_start)
+    patch_height = min(patch, size - y_start)
+
+    patch_data = np.zeros((patch_width, patch_height))
+    
+    for ix in range(patch_width):
+        for iy in range(patch_height):
+            nit = 0
+            global_x = x_start + ix
+            global_y = y_start + iy
+            z = complex(global_x / size * xwidth + xmin,
+                        global_y / size * yheight + ymin)
+            while abs(z) <= zabs_max and nit < nit_max:
+                z = z**2 + c
+                nit += 1
+            patch_data[ix, iy] = nit / nit_max
+
+    return (x_start, y_start, patch_data)
+    
+
+#def compute_julia_in_parallel(size, xmin, xmax, ymin, ymax, patch, nprocs, c):
 
     # replace the following code
     # with a parallel version
-    julia_img = compute_julia_set_sequential(xmin, xmax, ymin, ymax, size, size, c)
+    #julia_img = compute_julia_set_sequential(xmin, xmax, ymin, ymax, size, size, c)
+
+    #return julia_img
+    
+def compute_julia_in_parallel(size, xmin, xmax, ymin, ymax, patch, nprocs, c):
+
+    task_list = []
+
+    # Split image into patches (tiles)
+    for x in range(0, size, patch):
+        for y in range(0, size, patch):
+            task = (x, y, patch, size, xmin, xmax, ymin, ymax, c)
+            task_list.append(task)
+
+    # Run tasks in parallel
+    with Pool(processes=nprocs) as pool:
+        results = pool.map(compute_patch, task_list, chunksize=1)
+
+    # Reconstruct full image
+    julia_img = np.zeros((size, size))
+
+    for x_start, y_start, patch_data in results:
+        w, h = patch_data.shape
+        julia_img[x_start:x_start+w, y_start:y_start+h] = patch_data
 
     return julia_img
 
