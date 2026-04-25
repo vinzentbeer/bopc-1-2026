@@ -39,8 +39,8 @@ def process_data(filename):
     return pd.DataFrame(results)
 
 # Load both datasets
-df_cb = process_data("output_exp22_1_4961958.dat")
-df_cs = process_data("output_exp22_2_4962019.dat")
+df_cb = process_data("output_exp22_1_5116562.dat")
+df_cs = process_data("output_exp22_2_5116563.dat")  
 
 # Save tables (optional)
 df_cb.to_csv("results_cb.csv", index=False)
