@@ -72,7 +72,7 @@ grouped_2_3.to_csv("results_patch_2_3.csv", index=False)
 grouped_2_4.to_csv("results_patch_2_4.csv", index=False)    
 
 
-"""
+
 # Load both datasets
 df_cb = process_data("output_exp22_1_5116562.dat")
 df_cs = process_data("output_exp22_2_5116563.dat")  
@@ -88,4 +88,3 @@ print(df_cb.to_string(index=False))
 print("\nResults for cs (student):")
 print(df_cs.to_string(index=False))
 
-"""
